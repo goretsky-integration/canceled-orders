@@ -1,13 +1,11 @@
-import asyncio
 from collections.abc import Iterable
 
 import structlog.stdlib
 
 from connections import AuthCredentialsStorageConnection
 from connections.helpers import retry_on_failure
-from filters import filter_shift_manager_account_names
 from models import AccountCookies
-from parsers import parse_account_cookies_response, parse_accounts_response
+from parsers import parse_account_cookies_response
 
 __all__ = ('AuthCredentialsContext',)
 
@@ -23,12 +21,6 @@ class AuthCredentialsContext:
             auth_credentials_connection: AuthCredentialsStorageConnection,
     ):
         self.__auth_credentials_connection = auth_credentials_connection
-
-    @retry_on_failure(attempts=5)
-    async def get_shift_manager_account_names(self) -> set[str]:
-        response = await self.__auth_credentials_connection.get_accounts()
-        account_names = parse_accounts_response(response)
-        return filter_shift_manager_account_names(account_names)
 
     @retry_on_failure(attempts=5)
     async def get_account_cookies(
