@@ -1,18 +1,54 @@
 import factory
 
 from factories.partial_orders import PartialOrderFactory
-from models import DetailedOrder
+from models import (
+    DetailedOrder,
+    DetailedOrderDelivery,
+    DetailedOrderHistoryItem,
+    DetailedOrderPayment,
+)
 
-__all__ = ('DetailedOrderFactory',)
+__all__ = (
+    'DetailedOrderFactory',
+    'DetailedOrderDeliveryFactory',
+    'DetailedOrderPaymentFactory',
+    'DetailedOrderHistoryItemFactory',
+)
+
+
+class DetailedOrderDeliveryFactory(factory.Factory):
+    class Meta:
+        model = DetailedOrderDelivery
+
+    courier = factory.Faker('word')
+
+
+class DetailedOrderPaymentFactory(factory.Factory):
+    class Meta:
+        model = DetailedOrderPayment
+
+    price = factory.Faker('random_int')
+
+
+class DetailedOrderHistoryItemFactory(factory.Factory):
+    class Meta:
+        model = DetailedOrderHistoryItem
+
+    date = factory.Faker('date_time')
+    description = factory.Faker('sentence')
+    user_name = factory.Faker('name')
 
 
 class DetailedOrderFactory(PartialOrderFactory):
     class Meta:
         model = DetailedOrder
 
-    unit_name = factory.Faker('word')
-    created_at = factory.Faker('date_time')
-    canceled_at = factory.Faker('date_time')
-    receipt_printed_at = factory.Faker('date_time')
-    courier_name = factory.Faker('name')
-    canceled_by_user_name = factory.Faker('name')
+    id = factory.Faker('uuid4')
+    account_name = factory.Faker('name')
+    courier_needed = factory.Faker('boolean')
+    history = factory.List(
+        [factory.SubFactory(DetailedOrderHistoryItemFactory)],
+    )
+    number = factory.Sequence(lambda n: f'{n + 1}-0')
+    payment = factory.SubFactory(DetailedOrderPaymentFactory)
+    delivery = factory.SubFactory(DetailedOrderDeliveryFactory)
