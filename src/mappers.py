@@ -1,57 +1,78 @@
-import itertools
-import operator
+from collections import defaultdict
 from collections.abc import Iterable, Mapping
-from typing import TypeAlias
+from typing import Protocol, TypeVar
 
 import structlog.stdlib
 
 from enums import CountryCode
-from models import DetailedOrder
-from models.events import Event, EventPayload
+from models import DetailedOrder, Unit
+from models.events import Event, EventPayload, EventPayloadOrder
 
-__all__ = ('prepare_events', 'group_orders_by_unit_name')
+__all__ = ('prepare_events', 'group_by_account_name')
 
 logger = structlog.stdlib.get_logger('app')
 
-DetailedOrders: TypeAlias = Iterable[DetailedOrder]
-OrdersGroupedByUnitName: TypeAlias = Iterable[tuple[str, DetailedOrders]]
+
+class HasAccountName(Protocol):
+    account_name: str
 
 
-def group_orders_by_unit_name(
-        orders: Iterable[DetailedOrder],
-) -> OrdersGroupedByUnitName:
-    return itertools.groupby(
-        iterable=orders,
-        key=operator.attrgetter('unit_name')
-    )
+HasAccountNameT = TypeVar('HasAccountNameT', bound=HasAccountName)
+
+
+def group_by_account_name(
+        items: Iterable[HasAccountNameT],
+) -> dict[str, list[HasAccountNameT]]:
+    """Groups items by their account name.
+
+    Args:
+        items (Iterable[HasAccountNameT]): An iterable of items that have
+            an account_name attribute.
+
+    Returns:
+        AccountNameToItemsT: A dictionary where keys are account names
+            and values are lists of items with that account name.
+    """
+    account_name_to_items: dict[str, list[HasAccountNameT]] = defaultdict(list)
+    for item in items:
+        account_name_to_items[item.account_name].append(item)
+    return dict(account_name_to_items)
 
 
 def prepare_events(
         *,
-        unit_name_to_id: Mapping[str, int],
+        account_name_to_unit: Mapping[str, Unit],
         canceled_orders: Iterable[DetailedOrder],
         country_code: CountryCode,
 ) -> list[Event]:
-    unit_name_and_canceled_orders = group_orders_by_unit_name(canceled_orders)
+    account_name_to_orders = group_by_account_name(canceled_orders)
     events: list[Event] = []
 
-    for unit_name, grouped_canceled_orders in unit_name_and_canceled_orders:
+    for account_name, grouped_orders in account_name_to_orders.items():
 
         try:
-            unit_id = unit_name_to_id[unit_name]
+            unit = account_name_to_unit[account_name]
         except KeyError:
-            logger.warning(
-                'No unit_id found for unit_name',
-                unit_name=unit_name,
-            )
+            logger.error('No unit found', account_name=account_name)
             continue
 
+        orders = [
+            EventPayloadOrder(
+                id=order.id,
+                number=order.number,
+                price=order.payment.price,
+                sales_channel=order.sales_channel,
+                is_refund_receipt_printed=order.is_refund_receipt_printed,
+            )
+            for order in grouped_orders
+        ]
+
         event_payload = EventPayload(
-            orders=list(grouped_canceled_orders),
-            unit_name=unit_name,
+            orders=orders,
+            unit_name=unit.name,
             country_code=country_code,
         )
-        event = Event(unit_ids=[unit_id], payload=event_payload)
+        event = Event(unit_ids=[unit.id], payload=event_payload)
         events.append(event)
 
     return events
