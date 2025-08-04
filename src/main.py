@@ -1,18 +1,18 @@
 import asyncio
 import datetime
 
+import gspread
 from fast_depends import Depends, inject
 
-import message_queue
 from auth_credentials_context import AuthCredentialsContext
-from config import Config, get_config
+from config import Config, get_config, load_google_sheets_credentials
 from dependencies import (
     get_auth_credentials_context,
     get_dodo_is_context,
 )
 from dodo_is_context import DodoIsContext
 from filters import filter_valid_canceled_orders
-from mappers import prepare_events
+from google_sheets import GoogleSheetsGateway
 from models import Unit
 from time_helpers import get_yesterday_this_moment
 from units_context import load_units
@@ -31,6 +31,10 @@ async def main(
         ),
         config: Config = Depends(get_config),
 ):
+    client = gspread.service_account_from_dict(load_google_sheets_credentials())
+    spreadsheet = client.open_by_key(config.spreadsheet_id)
+
+    load_google_sheets_credentials()
     account_names = {unit.account_name for unit in units}
     accounts_cookies = await auth_credentials_context.get_accounts_cookies_batch(
         account_names=account_names,
@@ -42,18 +46,13 @@ async def main(
 
     filtered_canceled_orders = filter_valid_canceled_orders(canceled_orders)
 
-    account_name_to_unit = {unit.account_name: unit for unit in units}
-
-    events = prepare_events(
-        account_name_to_unit=account_name_to_unit,
-        canceled_orders=filtered_canceled_orders,
-        country_code=config.dodo_is.country_code,
+    google_sheets_gateway = GoogleSheetsGateway(
+        spreadsheet=spreadsheet,
+        units=units
     )
-
-    await message_queue.publish_events(
-        message_queue_url=config.message_queue_url,
-        events=events,
-    )
+    google_sheets_gateway.init_sheets()
+    for order in filtered_canceled_orders:
+        google_sheets_gateway.append_order(order)
 
 
 if __name__ == '__main__':

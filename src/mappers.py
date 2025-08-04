@@ -1,14 +1,10 @@
 from collections import defaultdict
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable
 from typing import Protocol, TypeVar
 
 import structlog.stdlib
 
-from enums import CountryCode
-from models import DetailedOrder, Unit
-from models.events import Event, EventPayload, EventPayloadOrder
-
-__all__ = ('prepare_events', 'group_by_account_name')
+__all__ = ('group_by_account_name',)
 
 logger = structlog.stdlib.get_logger('app')
 
@@ -37,42 +33,3 @@ def group_by_account_name(
     for item in items:
         account_name_to_items[item.account_name].append(item)
     return dict(account_name_to_items)
-
-
-def prepare_events(
-        *,
-        account_name_to_unit: Mapping[str, Unit],
-        canceled_orders: Iterable[DetailedOrder],
-        country_code: CountryCode,
-) -> list[Event]:
-    account_name_to_orders = group_by_account_name(canceled_orders)
-    events: list[Event] = []
-
-    for account_name, grouped_orders in account_name_to_orders.items():
-
-        try:
-            unit = account_name_to_unit[account_name]
-        except KeyError:
-            logger.error('No unit found', account_name=account_name)
-            continue
-
-        orders = [
-            EventPayloadOrder(
-                id=order.id,
-                number=order.number,
-                price=order.payment.price,
-                sales_channel=order.sales_channel,
-                is_refund_receipt_printed=order.is_refund_receipt_printed,
-            )
-            for order in grouped_orders
-        ]
-
-        event_payload = EventPayload(
-            orders=orders,
-            unit_name=unit.name,
-            country_code=country_code,
-        )
-        event = Event(unit_ids=[unit.id], payload=event_payload)
-        events.append(event)
-
-    return events

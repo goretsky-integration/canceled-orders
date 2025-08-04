@@ -1,3 +1,4 @@
+import json
 import pathlib
 import tomllib
 from dataclasses import dataclass
@@ -8,6 +9,13 @@ from enums import CountryCode
 __all__ = ('get_config', 'Config')
 
 CONFIG_FILE_PATH = pathlib.Path(__file__).parent.parent / 'config.toml'
+GOOGLE_SHEETS_CREDENTIALS_FILE_PATH = CONFIG_FILE_PATH / 'google_sheets_credentials.json'
+
+
+def load_google_sheets_credentials() -> dict[str, str]:
+    return json.loads(
+        GOOGLE_SHEETS_CREDENTIALS_FILE_PATH.read_text(encoding='utf-8')
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,6 +47,7 @@ class Config:
     auth_credentials_storage: StorageConfig
     units_storage: StorageConfig
     dodo_is: DodoIsConfig
+    spreadsheet_id: str
 
 
 def get_config() -> Config:
@@ -68,7 +77,8 @@ def get_config() -> Config:
         sentry=sentry,
         auth_credentials_storage=StorageConfig(
             base_url=auth_credentials_storage['base_url'],
-            http_client_timeout=auth_credentials_storage['http_client_timeout'],
+            http_client_timeout=auth_credentials_storage[
+                'http_client_timeout'],
         ),
         units_storage=StorageConfig(
             base_url=units_storage['base_url'],
@@ -78,4 +88,5 @@ def get_config() -> Config:
             country_code=CountryCode(config['dodo_is']['country_code']),
             http_client_timeout=config['dodo_is']['http_client_timeout'],
         ),
+        spreadsheet_id=config['google_sheets']['spreadsheet_id']
     )
