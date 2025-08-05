@@ -9,7 +9,7 @@ from enums import CountryCode
 __all__ = ('get_config', 'Config')
 
 CONFIG_FILE_PATH = pathlib.Path(__file__).parent.parent / 'config.toml'
-GOOGLE_SHEETS_CREDENTIALS_FILE_PATH = CONFIG_FILE_PATH / 'google_sheets_credentials.json'
+GOOGLE_SHEETS_CREDENTIALS_FILE_PATH = CONFIG_FILE_PATH.parent / 'google_sheets_credentials.json'
 
 
 def load_google_sheets_credentials() -> dict[str, str]:

@@ -10,6 +10,7 @@ UNIT_NAME_TO_ABBREVIATION = {
     'Подольск-3': 'П-3',
     'Подольск-2': 'П-2',
     'Подольск-1': 'П-1',
+    'Подольск-4': 'П-4',
     'Москва 4-16': '4-16',
     'Москва 4-9': '4-9',
     'Москва 4-8': '4-8',
@@ -107,7 +108,7 @@ class GoogleSheetsGateway:
         if abbreviation not in self.__title_to_worksheet:
             return
 
-        order_url = f'=HYPERLINK("https://shiftmanager.dodopizza.ru/Managment/ShiftManagment/Orders#/order/{order.id.hex.upper()}", "{order.number}")'
+        order_url = f'=HYPERLINK("https://shiftmanager.dodopizza.ru/Managment/ShiftManagment/Orders#/order/{order.id.hex.upper()}"; "{order.number}")'
         worksheet = self.__title_to_worksheet[abbreviation]
         worksheet.append_row(
             [

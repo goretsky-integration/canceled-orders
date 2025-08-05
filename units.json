@@ -18,6 +18,12 @@
     "account_name": "shift_manager_p_1"
   },
   {
+    "id": 1665,
+    "name": "Подольск-4",
+    "uuid": "4e11f854-774d-baec-11ef-047aebf68f29",
+    "account_name": "shift_manager_p_4"
+  },
+  {
     "id": 969,
     "name": "Москва 4-16",
     "uuid": "000d3a21-da51-a812-11e9-40067acb1091",

@@ -51,8 +51,10 @@ async def main(
         units=units
     )
     google_sheets_gateway.init_sheets()
-    for order in filtered_canceled_orders:
+    total = len(filtered_canceled_orders)
+    for i, order in enumerate(filtered_canceled_orders, start=1):
         google_sheets_gateway.append_order(order)
+        print(f'Appended order {i}/{total}')
 
 
 if __name__ == '__main__':
