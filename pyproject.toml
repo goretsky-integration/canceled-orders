@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "bs4>=0.0.2",
     "fast-depends>=2.4.12",
+    "gspread>=6.2.1",
     "httpx>=0.28.1",
     "lxml>=6.0.0",
     "structlog>=25.4.0",
