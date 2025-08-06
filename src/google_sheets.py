@@ -112,7 +112,7 @@ class GoogleSheetsGateway:
         worksheet = self.__title_to_worksheet[abbreviation]
         worksheet.append_row(
             [
-                f'{order.created_at:%d.%m.%Y %H:%M:%S}',
+                f'{order.created_at:%d.%m.%Y}',
                 'Доставка' if order.courier_needed else 'Ресторан',
                 order_url,
                 order.payment.price,
