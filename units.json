@@ -180,6 +180,12 @@
     "account_name": "shift_manager_smolensk_4"
   },
   {
+    "id": 1893,
+    "name": "Смоленск-5",
+    "uuid": "11f0687c-9f7e-af4c-c4a2-2e455eeb7cd0",
+    "account_name": "shift_manager_smolensk_5"
+  },
+  {
     "id": 609,
     "name": "Вязьма-1",
     "uuid": "000d3a26-b5b0-80f1-11e7-c46eaf0afc18",
