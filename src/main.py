@@ -68,11 +68,6 @@ async def main(
         google_sheets_gateway.append_order(order)
         print(f"Appended order {i}/{total}")
 
-    await publish_events(
-        events=events,
-        message_queue_url=config.message_queue_url,
-    )
-
 
 if __name__ == "__main__":
     asyncio.run(main())
